@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>💪 Treny Pro — Тренировки</title>
+  
+  <!-- PWA Manifest -->
+  <script>
+    (function() {
+      const manifest = {
+        name: "💪 Treny Pro — Тренировки и калории",
+        short_name: "Treny Pro",
+        description: "Профессиональный трекер тренировок",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#0a0a0f",
+        theme_color: "#ff2d55",
+        orientation: "portrait",
+        icons: [
+          { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23ff2d55'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle' fill='white' font-family='Arial'%3E💪%3C/text%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+          { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23ff2d55'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle' fill='white' font-family='Arial'%3E💪%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const manifestURL = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestURL;
+      document.head.appendChild(link);
+    })();
+  </script>
+  
+  <meta name="theme-color" content="#ff2d55">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <style>
+    /* ===== БАЗОВЫЕ СТИЛИ ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    :root {
+      --primary: #ff2d55;
+      --primary-dark: #cc0033;
+      --primary-light: #ff6b8a;
+      --bg-dark: #0a0a0f;
+      --bg-card: #14141e;
+      --bg-card-hover: #1a1a2e;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0b8;
+      --text-muted: #666680;
+      --shadow: 0 8px 32px rgba(0,0,0,0.6);
+      --glow: 0 0 40px rgba(255,45,85,0.15);
+      --radius: 20px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding-bottom: calc(80px + var(--safe-bottom));
+      overflow-x: hidden;
+    }
+
+    /* ===== ШАПКА ===== */
+    .header {
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,45,85,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+    }
+    .header-brand .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    .header-brand span { background: linear-gradient(135deg, #fff, #a0a0b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-actions { display: flex; gap: 8px; }
+    .header-btn {
+      background: rgba(255,255,255,0.06);
+      border: none;
+      color: var(--text-secondary);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-btn:hover, .header-btn:active { background: rgba(255,45,85,0.15); color: var(--primary); }
+
+    /* ===== МЕНЮ ===== */
+    .nav-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .nav-overlay.open { opacity: 1; pointer-events: all; }
+
+    .nav-panel {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100%;
+      background: var(--bg-card);
+      z-index: 201;
+      padding: 20px 16px;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+      border-left: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-panel.open { right: 0; }
+    .nav-panel .nav-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-panel .nav-header h3 { font-size: 1.1rem; color: var(--text-secondary); }
+    .nav-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .nav-panel a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.25s;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+    .nav-panel a .nav-icon { font-size: 1.2rem; width: 28px; }
+    .nav-panel a:hover, .nav-panel a.active {
+      background: rgba(255,45,85,0.1);
+      color: #fff;
+    }
+    .nav-panel a.active { background: rgba(255,45,85,0.15); border-left: 3px solid var(--primary); }
+    .nav-panel .nav-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 12px 0;
+    }
+    .nav-panel .nav-version {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+    .content { max-width: 1000px; margin: 0 auto; padding: 16px 16px 40px; }
+
+    /* ===== СТРАНИЦЫ ===== */
+    .page {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-header h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-header .badge {
+      background: rgba(255,45,85,0.15);
+      color: var(--primary-light);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* ===== СЕТКА УПРАЖНЕНИЙ ===== */
+    .exercise-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .exercise-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+    }
+    .exercise-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,45,85,0.2);
+      box-shadow: var(--glow);
+    }
+    .exercise-card:active { transform: scale(0.98); }
+    
+    .exercise-card .card-img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: var(--bg-dark);
+      display: block;
+    }
+    .exercise-card .card-body { padding: 16px 18px 18px; }
+    .exercise-card .card-body h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    .exercise-card .card-body .card-sub {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+    .exercise-card .card-body .card-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .exercise-card .card-body .card-tags span {
+      background: rgba(255,255,255,0.04);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+    .exercise-card .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      padding-top: 12px;
+    }
+    .exercise-card .card-actions button {
+      flex: 1;
+      min-width: 60px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+      touch-action: manipulation;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+    }
+    .exercise-card .card-actions button:active { transform: scale(0.95); }
+    .exercise-card .card-actions .btn-edit:hover { background: rgba(100,180,255,0.15); color: #66aaff; }
+    .exercise-card .card-actions .btn-delete:hover { background: rgba(255,45,85,0.15); color: var(--primary); }
+    .exercise-card .card-actions .btn-log:hover { background: rgba(68,204,136,0.15); color: #44cc88; }
+    .exercise-card .card-actions .btn-video {
+      background: rgba(255,45,85,0.08);
+      color: var(--primary-light);
+    }
+    .exercise-card .card-actions .btn-video:hover { background: rgba(255,45,85,0.2); }
+
+    /* ===== РЕЖИМ РЕДАКТИРОВАНИЯ ===== */
+    .edit-mode input {
+      width: 100%;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.4);
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: 0.25s;
+    }
+    .edit-mode input:focus { border-color: var(--primary); background: rgba(0,0,0,0.6); }
+    .edit-mode .edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .edit-mode .edit-actions button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    .edit-mode .btn-save { background: var(--primary); color: #fff; }
+    .edit-mode .btn-save:hover { background: var(--primary-dark); }
+    .edit-mode .btn-cancel { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+    .edit-mode .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+
+    /* ===== КНОПКА ДОБАВЛЕНИЯ ===== */
+    .add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px auto 0;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: fit-content;
+      min-width: 220px;
+      box-shadow: 0 4px 24px rgba(255,45,85,0.3);
+    }
+    .add-btn:active { transform: scale(0.96); }
+    .add-btn:hover { box-shadow: 0 8px 40px rgba(255,45,85,0.4); }
+
+    /* ===== КАЛЬКУЛЯТОР ===== */
+    .calc-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.05);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .calc-card .form-group {
+      margin-bottom: 16px;
+    }
+    .calc-card .form-group label {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .calc-card .form-group input,
+    .calc-card .form-group select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.25s;
+      -webkit-appearance: none;
+    }
+    .calc-card .form-group input:focus,
+    .calc-card .form-group select:focus {
+      border-color: var(--primary);
+      background: rgba(0,0,0,0.5);
+    }
+    .calc-card .form-group select option { background: var(--bg-dark); color: #fff; }
+    .calc-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .calc-btn:active { transform: scale(0.98); }
+
+    .result-box {
+      margin-top: 20px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 16px;
+      padding: 20px;
+      border-left: 4px solid var(--primary);
+      display: none;
+    }
+    .result-box.show { display: block; animation: fadeIn 0.5s ease; }
+    .result-box h3 { color: var(--primary-light); margin-bottom: 12px; }
+    .result-box p { color: var(--text-secondary); margin: 4px 0; font-size: 0.95rem; }
+    .result-box .highlight { color: #fff; font-weight: 700; }
+
+    /* ===== ДНЕВНИК ===== */
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .log-item {
+      background: var(--bg-card);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 3px solid #44cc88;
+      animation: fadeIn 0.3s ease;
+    }
+    .log-item .log-info .log-exercise { font-weight: 600; color: #fff; }
+    .log-item .log-info .log-detail { color: var(--text-secondary); font-size: 0.85rem; }
+    .log-item .log-date { color: var(--text-muted); font-size: 0.75rem; }
+    .log-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 40px 0;
+    }
+    .log-empty .log-empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
+
+    /* ===== ТАЙМЕР (плавающий) ===== */
+    .timer-float {
+      position: fixed;
+      bottom: calc(90px + var(--safe-bottom));
+      right: 20px;
+      z-index: 50;
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 16px 20px;
+      border: 1px solid rgba(255,45,85,0.15);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      min-width: 160px;
+      transition: all 0.3s;
+    }
+    .timer-float.hidden { transform: translateX(120%); opacity: 0; pointer-events: none; }
+    .timer-float .timer-display {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      color: #fff;
+      letter-spacing: 2px;
+    }
+    .timer-float .timer-controls {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .timer-float .timer-controls button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.25s;
+      touch-action: manipulation;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+    }
+    .timer-float .timer-controls button:active { transform: scale(0.92); }
+    .timer-float .timer-controls .btn-start { background: #44cc88; color: #000; }
+    .timer-float .timer-controls .btn-start:hover { background: #66eeaa; }
+    .timer-float .timer-controls .btn-stop { background: var(--primary); color: #fff; }
+    .timer-float .timer-controls .btn-stop:hover { background: var(--primary-dark); }
+    .timer-float .timer-controls .btn-reset:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .timer-float .timer-set {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .timer-float .timer-set button {
+      background: rgba(255,255,255,0.04);
+      border: none;
+      color: var(--text-secondary);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    .timer-float .timer-set button:active { transform: scale(0.9); }
+    .timer-float .timer-set button:hover { background: rgba(255,45,85,0.15); color: #fff; }
+    .timer-float .timer-set .timer-label { color: var(--text-secondary); font-size: 0.85rem; min-width: 40px; text-align: center; }
+
+    .timer-toggle {
+      position: fixed;
+      bottom: calc(90px + var(--safe-bottom));
+      right: 20px;
+      z-index: 51;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(255,45,85,0.3);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .timer-toggle:active { transform: scale(0.9); }
+    .timer-toggle.hidden { display: none; }
+
+    /* ===== НИЖНЯЯ ПАНЕЛЬ (мобильная) ===== */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10,10,15,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      z-index: 60;
+      padding: 8px 0 calc(8px + var(--safe-bottom));
+      justify-content: space-around;
+    }
+    .bottom-nav button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.65rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 4px 12px;
+      transition: 0.25s;
+      touch-action: manipulation;
+    }
+    .bottom-nav button .bn-icon { font-size: 1.4rem; }
+    .bottom-nav button.active { color: var(--primary-light); }
+    .bottom-nav button:active { transform: scale(0.9); }
+
+    /* ===== МОДАЛЬНЫЕ ОКНА ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(12px);
+      z-index: 300;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .modal.open { display: flex; }
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: 24px;
+      max-width: 500px;
+      width: 100%;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-header h3 { font-size: 1.2rem; color: #fff; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: var(--primary); }
+    .modal-body { margin-bottom: 16px; }
+    .modal-body label { display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 4px; }
+    .modal-body input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      margin-bottom: 12px;
+    }
+    .modal-body input:focus { border-color: var(--primary); }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .modal-actions button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    .modal-actions .btn-primary { background: var(--primary); color: #fff; }
+    .modal-actions .btn-primary:hover { background: var(--primary-dark); }
+    .modal-actions .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+    .modal-actions .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+    .modal-gif-body {
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-gif-body img { max-width: 100%; max-height: 60vh; object-fit: contain; }
+    .modal-gif-body .no-gif { color: var(--text-muted); padding: 40px; text-align: center; }
+
+    /* ===== ИНСТРУМЕНТЫ ДАННЫХ ===== */
+    .data-tools {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 20px 0 12px;
+    }
+    .data-tools button {
+      padding: 10px 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 30px;
+      background: rgba(255,255,255,0.03);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    .data-tools button:active { transform: scale(0.96); }
+    .data-tools button:hover { background: rgba(255,45,85,0.08); border-color: rgba(255,45,85,0.2); color: #fff; }
+    .save-note {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+    }
+
+    /* ===== JSON БЛОК ===== */
+    .json-block {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .json-block .json-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .json-block .json-text {
+      background: rgba(0,0,0,0.4);
+      border-radius: 12px;
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      border: 1px solid rgba(255,255,255,0.04);
+      margin-bottom: 12px;
+      user-select: all;
+    }
+    .json-block .copy-btn {
+      display: block;
+      margin: 0 auto;
+      padding: 8px 24px;
+      border: none;
+      border-radius: 30px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    .json-block .copy-btn:active { transform: scale(0.96); }
+    .json-block .copy-btn:hover { background: rgba(255,45,85,0.1); color: #fff; }
+
+    /* ===== КНОПКА УСТАНОВКИ ===== */
+    #installBtn {
+      position: fixed;
+      bottom: calc(150px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 40px rgba(255,45,85,0.4);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.04); }
+    }
+
+    /* ===== АДАПТИВНОСТЬ ===== */
+    @media (max-width: 768px) {
+      .bottom-nav { display: flex; }
+      .header { padding: 10px 16px; }
+      .header-brand { font-size: 1.2rem; }
+      .exercise-grid { grid-template-columns: 1fr; }
+      .page-header h2 { font-size: 1.4rem; }
+      .timer-float { bottom: calc(100px + var(--safe-bottom)); right: 12px; min-width: 140px; padding: 14px 16px; }
+      .timer-float .timer-display { font-size: 1.6rem; }
+      .timer-toggle { bottom: calc(100px + var(--safe-bottom)); right: 12px; width: 42px; height: 42px; font-size: 1.1rem; }
+      .nav-panel { width: 260px; right: -260px; }
+      .calc-card { padding: 16px; }
+      .modal-content { padding: 16px; margin: 10px; }
+      .exercise-card .card-img { height: 160px; }
+      #installBtn { bottom: calc(130px + var(--safe-bottom)); padding: 12px 24px; font-size: 0.9rem; }
+    }
+    @media (max-width: 480px) {
+      .header-brand { font-size: 1rem; }
+      .header-brand .logo-icon { width: 30px; height: 30px; font-size: 1rem; }
+      .page-header h2 { font-size: 1.2rem; }
+      .exercise-card .card-img { height: 140px; }
+      .timer-float { min-width: 120px; padding: 12px 14px; }
+      .timer-float .timer-display { font-size: 1.3rem; }
+      .bottom-nav button { font-size: 0.6rem; padding: 2px 8px; }
+      .bottom-nav button .bn-icon { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== ШАПКА ===== -->
+<header class="header">
+  <a href="#" class="header-brand" id="homeLink">
+    <div class="logo-icon">💪</div>
+    <span>Treny Pro</span>
+  </a>
+  <div class="header-actions">
+    <button class="header-btn" id="menuToggle" aria-label="Меню">☰</button>
+  </div>
+</header>
+
+<!-- ===== МЕНЮ ===== -->
+<div class="nav-overlay" id="navOverlay"></div>
+<nav class="nav-panel" id="navPanel">
+  <div class="nav-header">
+    <h3>🏋️ Меню</h3>
+    <button class="nav-close" id="navClose">✕</button>
+  </div>
+  <a data-page="biceps" class="active"><span class="nav-icon">💪</span> Бицепс</a>
+  <a data-page="triceps"><span class="nav-icon">🔱</span> Трицепс</a>
+  <a data-page="predplechia"><span class="nav-icon">🤲</span> Предплечья</a>
+  <a data-page="grud"><span class="nav-icon">🔥</span> Грудь</a>
+  <a data-page="nogi"><span class="nav-icon">🦵</span> Ноги</a>
+  <a data-page="spina"><span class="nav-icon">🔙</span> Спина</a>
+  <a data-page="plechi"><span class="nav-icon">🏋️</span> Плечи</a>
+  <a data-page="press"><span class="nav-icon">⬆️</span> Пресс</a>
+  <div class="nav-divider"></div>
+  <a data-page="calculator"><span class="nav-icon">📊</span> Калькулятор</a>
+  <a data-page="diary"><span class="nav-icon">📖</span> Дневник</a>
+  <div class="nav-version">v2.0 • Treny Pro</div>
+</nav>
+
+<!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
+<main class="content">
+
+  <!-- БИЦЕПС -->
+  <section id="biceps" class="page active">
+    <div class="page-header"><h2>💪 Бицепс</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-biceps"></div>
+    <button class="add-btn" data-section="biceps">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- ТРИЦЕПС -->
+  <section id="triceps" class="page">
+    <div class="page-header"><h2>🔱 Трицепс</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-triceps"></div>
+    <button class="add-btn" data-section="triceps">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- ПРЕДПЛЕЧЬЯ -->
+  <section id="predplechia" class="page">
+    <div class="page-header"><h2>🤲 Предплечья</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-predplechia"></div>
+    <button class="add-btn" data-section="predplechia">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- ГРУДЬ -->
+  <section id="grud" class="page">
+    <div class="page-header"><h2>🔥 Грудь</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-grud"></div>
+    <button class="add-btn" data-section="grud">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- НОГИ -->
+  <section id="nogi" class="page">
+    <div class="page-header"><h2>🦵 Ноги</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-nogi"></div>
+    <button class="add-btn" data-section="nogi">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- СПИНА -->
+  <section id="spina" class="page">
+    <div class="page-header"><h2>🔙 Спина</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-spina"></div>
+    <button class="add-btn" data-section="spina">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- ПЛЕЧИ -->
+  <section id="plechi" class="page">
+    <div class="page-header"><h2>🏋️ Плечи</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-plechi"></div>
+    <button class="add-btn" data-section="plechi">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- ПРЕСС -->
+  <section id="press" class="page">
+    <div class="page-header"><h2>⬆️ Пресс</h2><span class="badge">4 упражнения</span></div>
+    <div class="exercise-grid" id="grid-press"></div>
+    <button class="add-btn" data-section="press">➕ Добавить упражнение</button>
+  </section>
+
+  <!-- КАЛЬКУЛЯТОР -->
+  <section id="calculator" class="page">
+    <div class="page-header"><h2>📊 Калькулятор калорий</h2></div>
+    <div class="calc-card">
+      <form id="calorieForm">
+        <div class="form-group"><label>Пол</label><select id="gender"><option value="male">Мужской</option><option value="female">Женский</option></select></div>
+        <div class="form-group"><label>Возраст (лет)</label><input type="number" id="age" placeholder="25" min="10" max="120" required></div>
+        <div class="form-group"><label>Вес (кг)</label><input type="number" id="weight" placeholder="70" min="20" max="300" step="0.1" required></div>
+        <div class="form-group"><label>Рост (см)</label><input type="number" id="height" placeholder="175" min="100" max="250" step="0.1" required></div>
+        <div class="form-group"><label>Активность</label><select id="activity"><option value="1.2">Минимальная</option><option value="1.375">Низкая</option><option value="1.55" selected>Средняя</option><option value="1.725">Высокая</option><option value="1.9">Экстремальная</option></select></div>
+        <button type="submit" class="calc-btn">Рассчитать</button>
+      </form>
+      <div class="result-box" id="resultBox">
+        <h3>📊 Ваша норма калорий</h3>
+        <p><span class="highlight" id="bmrDisplay">0</span> ккал — BMR</p>
+        <p><span class="highlight" id="maintenanceDisplay">0</span> ккал — поддержание</p>
+        <p><span class="highlight" id="lossDisplay">0</span> ккал — похудение</p>
+        <p><span class="highlight" id="gainDisplay">0</span> ккал — набор массы</p>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">*Формула Миффлина-Сан Жеора</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ДНЕВНИК -->
+  <section id="diary" class="page">
+    <div class="page-header"><h2>📖 Дневник</h2></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+      <p style="color:var(--text-secondary); font-size:0.9rem;">Все записи подходов</p>
+      <button class="data-tools" style="margin:0; padding:6px 16px; border-color:rgba(255,45,85,0.2); color:var(--primary);" id="clearLogBtn">🗑️ Очистить</button>
+    </div>
+    <div id="logList" class="log-list"></div>
+  </section>
+
+  <!-- ИНСТРУМЕНТЫ -->
+  <div class="data-tools">
+    <button id="exportDataBtn">📤 Экспорт</button>
+    <button id="importDataBtn">📥 Импорт</button>
+  </div>
+  <div class="save-note">✅ Все изменения сохраняются автоматически</div>
+
+  <!-- JSON БЛОК -->
+  <div class="json-block">
+    <div class="json-label">📋 Данные для импорта</div>
+    <div class="json-text" id="jsonTextContent"></div>
+    <button class="copy-btn" id="copyJsonBtn">📋 Копировать</button>
+  </div>
+
+</main>
+
+<!-- ===== ТАЙМЕР ===== -->
+<div class="timer-toggle hidden" id="timerToggle">⏱️</div>
+<div class="timer-float" id="timerPanel">
+  <div class="timer-display" id="timerDisplay">01:30</div>
+  <div class="timer-set">
+    <button id="timerDec">−</button>
+    <span class="timer-label" id="timerSetValue">1:30</span>
+    <button id="timerInc">+</button>
+  </div>
+  <div class="timer-controls">
+    <button class="btn-start" id="timerStart">▶ Старт</button>
+    <button class="btn-stop" id="timerStop" style="display:none;">⏸ Пауза</button>
+    <button class="btn-reset" id="timerReset">↺</button>
+  </div>
+</div>
+
+<!-- ===== НИЖНЯЯ ПАНЕЛЬ ===== -->
+<nav class="bottom-nav" id="bottomNav">
+  <button data-page="biceps" class="active"><span class="bn-icon">💪</span> Тренировки</button>
+  <button data-page="calculator"><span class="bn-icon">📊</span> Калории</button>
+  <button data-page="diary"><span class="bn-icon">📖</span> Дневник</button>
+</nav>
+
+<!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
+
+<!-- GIF модалка -->
+<div class="modal" id="gifModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="gifModalTitle">Упражнение</h3><button class="modal-close" id="gifModalClose">✕</button></div>
+    <div class="modal-gif-body" id="gifModalBody"></div>
+  </div>
+</div>
+
+<!-- Лог модалка -->
+<div class="modal" id="logModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="logModalTitle">Записать подход</h3><button class="modal-close" id="logModalClose">✕</button></div>
+    <div class="modal-body">
+      <label>Вес (кг)</label>
+      <input type="number" id="logWeight" placeholder="20" step="0.5" min="0">
+      <label>Повторения</label>
+      <input type="number" id="logReps" placeholder="12" min="1" step="1">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="logCancelBtn">Отмена</button>
+      <button class="btn-primary" id="logSaveBtn">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Данные модалка -->
+<div class="modal" id="dataModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="dataModalTitle">Данные</h3><button class="modal-close" id="dataModalClose">✕</button></div>
+    <div class="modal-body"><textarea id="dataTextarea" style="width:100%;min-height:200px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.3);color:#fff;padding:12px;font-family:monospace;font-size:0.85rem;resize:vertical;outline:none;"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="copyDataBtn">📋 Копировать</button>
+      <button class="btn-primary" id="importDataConfirmBtn">✅ Импорт</button>
+      <button class="btn-secondary" id="dataModalCloseBtn">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// ДАННЫЕ ПО УМОЛЧАНИЮ (все упражнения сохранены)
+// ============================================
+const defaultData = {
+  "biceps": [
+    {"id":1,"title":"Перекрестный подъем на бицепсы","img":"https://static.eldorado.ru/promo/src/kak-nakachat-bitseps/img/img7.webp","videoLink":"https://yandex.ru/video/preview/5650177777283213894","gifLink":"https://media1.tenor.com/m/bD-xqk220MMAAAAd/miodek.gif"},
+    {"id":2,"title":"Подъем гантелей на бицепсы","img":"https://i.ytimg.com/vi/hF0WftQ4R6c/maxresdefault.jpg","videoLink":"https://www.youtube.com/watch?v=hF0WftQ4R6c","gifLink":"https://gymbot.ru/images/68e64ecd32dfa_dumbbell-bicep-curl__1_.gif"},
+    {"id":3,"title":"Подъём гантелей (молотки)","img":"https://training.fit/wp-content/uploads/2020/02/bizeps-hammercurls.png","videoLink":"https://yandex.ru/video/preview/10082013806034730694","gifLink":"https://i.pinimg.com/originals/98/c5/ed/98c5edd9263508f2ed32612039bd6b38.gif"},
+    {"id":4,"title":"Концентрированные сгибания","img":"https://gymbot.ru/images/688bbf536c12a_dumbbell-concentration-curl-1536x707.png","videoLink":"https://yandex.ru/video/preview/9522099652989824335","gifLink":"https://reminder.media/storage/images/posts/SAi/SAiHeWOBzsF6801178eecb98.gif"}
+  ],
+  "triceps": [
+    {"id":5,"title":"Разгибание рук с гантелью из‑за головы","img":"https://www.liftosaur.com/externalimages/exercises/full/large/tricepsextension_dumbbell_full_large.png","videoLink":"https://yandex.ru/video/preview/12514608515220304314","gifLink":"https://i.pinimg.com/originals/b0/7e/04/b07e041f3be7b6a0164b8a117300d9c4.gif"},
+    {"id":6,"title":"Отжимания на трицепс от скамьи","img":"https://muskul.pro/wp-content/uploads/2017/11/tricep_dips_feet_elevated.jpg","videoLink":"https://yandex.ru/video/preview/18303323099919911592","gifLink":"https://gymbot.ru/images/68d582a3a4a9a_bench-tricep-dips.gif"},
+    {"id":7,"title":"Отжимания узким хватом","img":"https://www.lyfta.app/_next/image?url=%2Fthumbnails%2F02591201.jpg&w=3840&q=75","videoLink":"https://yandex.ru/video/preview/8254547599370449637","gifLink":"https://steelsports.ru/wp-content/uploads/2020/04/65.gif"},
+    {"id":8,"title":"Французский жим с гантелью лёжа","img":"https://i.pinimg.com/736x/d2/65/6b/d2656bc140333708c1fa5e6be5703a97.jpg","videoLink":"https://yandex.ru/video/preview/6272843754580151357","gifLink":"https://goodlooker.ru/wp-content/uploads/2020/04/Razgibaniya_ruk_lezha.gif"}
+  ],
+  "predplechia": [
+    {"id":9,"title":"Сгибание кисти с гантелью","img":"https://www.lyfta.app/_next/image?url=https%3A%2F%2Flyfta.app%2Fimages%2Fexercises%2F04011101.png&w=640&q=80","videoLink":"https://yandex.ru/video/preview/5813878957969911769","gifLink":"https://burnfit.io/en/wp-content/uploads/sites/3/2026/01/DB_WRIST_CURL.gif"},
+    {"id":10,"title":"Сжимание эспандера","img":"https://avatars.mds.yandex.net/get-mpic/11483501/2a0000019d7bd0e567baba90f9ada0b5a5ca/orig","videoLink":"https://yandex.ru/video/preview/11672061965555773795","gifLink":"https://media1.tenor.com/m/9pbJ_26kgcgAAAAd/степан-жмёт.gif"},
+    {"id":11,"title":"Подтягивание на турнике","img":"https://dussh2tmr.ru/ve-files/0005068.jpg","videoLink":"https://dzen.ru/video/watch/64240c7fe1fa7f2864f3849f?f=video","gifLink":"https://gymbot.ru/images/68e540a13a756_pull-up.gif"},
+    {"id":12,"title":"Пулловер с гантелей","img":"https://cdn.shopify.com/s/files/1/0449/8453/3153/files/Dumbbell-Pullover-Muscles-Worked_600x600.jpg?v=1718935258","videoLink":"https://www.youtube.com/watch?v=5TkEkKJS4cE","gifLink":"https://goodlooker.ru/wp-content/uploads/2016/06/Pullover.gif"}
+  ],
+  "grud": [
+    {"id":13,"title":"Разводки лёжа (прямой хват)","img":"https://sport-center.by/upload/medialibrary/c4b/c4bac5f2cb6206c5e074ae5cd6cfc11e.jpg","videoLink":"https://yandex.ru/video/preview/11402483166830685278","gifLink":"https://media1.tenor.com/m/6xGztnn1DJoAAAAd/разведения-с-гантелями.gif"},
+    {"id":14,"title":"Разводки лёжа (боковой хват)","img":"https://i.pinimg.com/originals/5e/05/f0/5e05f0e3fd324e75be1d6f10bb69590e.jpg?nii=t","videoLink":"https://yandex.ru/video/preview/11402483166830685278","gifLink":"https://media.tenor.com/vWwcbmS-zM8AAAAC/жим-лежа-с-гантелями.gif"},
+    {"id":15,"title":"Пулловер с гантелей","img":"https://cdn.shopify.com/s/files/1/0449/8453/3153/files/Dumbbell-Pullover-Muscles-Worked_600x600.jpg?v=1718935258","videoLink":"https://www.youtube.com/watch?v=5TkEkKJS4cE","gifLink":"https://goodlooker.ru/wp-content/uploads/2016/06/Pullover.gif"},
+    {"id":16,"title":"Отжимания на ширине плеч","img":"https://fsd.multiurok.ru/html/2020/05/29/s_5ed0b17708c1c/1427315_8.jpeg","videoLink":"https://yandex.ru/video/preview/16066478887355068576","gifLink":"https://i.pinimg.com/originals/fd/bb/09/fdbb092b58863e5c86fdb8bb1411fcea.gif?nii=t"}
+  ],
+  "nogi": [
+    {"id":17,"title":"Приседания","img":"https://medaboutme.ru/upload/medialibrary/a3a/shutterstock_306013061.jpg","videoLink":"https://yandex.ru/video/preview/3527818769567355974","gifLink":"https://reminder.media/storage/images/posts/tOq/tOq2TugvE6m67b74217bf368.gif"},
+    {"id":18,"title":"Приседания со штангой","img":"https://www.lyfta.app/_next/image?url=https%3A%2F%2Flyfta.app%2Fimages%2Fexercises%2F00631101.png&w=640&q=80","videoLink":"https://yandex.ru/video/preview/3527818769567355974","gifLink":"https://media.tenor.com/Pfj8vy41k-0AAAAC/gym.gif"},
+    {"id":19,"title":"Подъём на носки с гантелями","img":"https://fitnessvolt.com/wp-content/uploads/2021/02/dumbbell-standing-calf-raise.jpg","videoLink":"https://yandex.ru/video/preview/11158963819326300916","gifLink":"https://goodlooker.ru/wp-content/uploads/2020/02/Podem_na_cypochki.gif"},
+    {"id":20,"title":"Выпады с гантелями","img":"https://i.pinimg.com/736x/36/c5/c8/36c5c8bce260f747fc0153de2b42338b.jpg","videoLink":"https://yandex.ru/video/preview/6785520172279865692","gifLink":"https://www.fitnessandbeast.com/wp-content/uploads/2017/05/Sabit-Dumbbell-Lunges.gif"}
+  ],
+  "spina": [
+    {"id":21,"title":"Подтягивания на турнике","img":"https://dussh2tmr.ru/ve-files/0005068.jpg","videoLink":"https://dzen.ru/video/watch/64240c7fe1fa7f2864f3849f?f=video","gifLink":"https://gymbot.ru/images/68e540a13a756_pull-up.gif"},
+    {"id":22,"title":"Пулловер с гантелей (широчайшие)","img":"https://cdn.shopify.com/s/files/1/0449/8453/3153/files/Dumbbell-Pullover-Muscles-Worked_600x600.jpg?v=1718935258","videoLink":"https://www.youtube.com/watch?v=5TkEkKJS4cE","gifLink":"https://goodlooker.ru/wp-content/uploads/2016/06/Pullover.gif"},
+    {"id":23,"title":"Шраги с гантелями (трапеция)","img":"https://sport-center.by/upload/medialibrary/7cb/7cb5ae435992e3905ed6cf074483fd9e.jpg","videoLink":"https://yandex.ru/video/preview/5608022641161424876","gifLink":"https://gymbot.ru/wp-content/uploads/2024/07/ezgif-4-9788459ace.gif"},
+    {"id":24,"title":"Румынская тяга с гантелями","img":"https://i.pinimg.com/736x/fd/38/17/fd3817360cdf1ae84e140291e42fd69a.jpg","videoLink":"https://yandex.ru/video/preview/15715380504693155269","gifLink":"https://fitcron.com/wp-content/uploads/2021/04/13291301-Dumbbell-Palm-Rotational-Bent-Over-Row_Back_720.gif"}
+  ],
+  "plechi": [
+    {"id":25,"title":"Жим гантелей вверх стоя","img":"https://i.pinimg.com/originals/fd/dc/dd/fddcdd5882770750e2bc848efc36eae6.jpg?nii=t","videoLink":"https://yandex.ru/video/preview/13418140886723573940","gifLink":"https://i.pinimg.com/originals/44/ee/2b/44ee2b4e68ef87e15f29859cd5c233db.gif?nii=t"},
+    {"id":26,"title":"Разводки с гантелями стоя","img":"https://s3.amazonaws.com/prod.skimble/assets/2636564/image_iphone.jpg","videoLink":"https://yandex.ru/video/preview/9367672184229532835","gifLink":"https://goodlooker.ru/wp-content/uploads/2020/09/supersety-na-plechi.gif"},
+    {"id":27,"title":"Подъём гантелей перед собой","img":"https://i.pinimg.com/736x/fe/24/c6/fe24c620a1edd88bbdd2b8bbe12cb79e.jpg","videoLink":"https://yandex.ru/video/preview/1033595802957363018","gifLink":"https://goodlooker.ru/wp-content/uploads/2021/04/Podemy_ruk_pered_soboj_poperemenno_2.gif"},
+    {"id":28,"title":"Разводки стоя в наклоне","img":"https://i.ytimg.com/vi/jadT9GhtNQk/oardefault.jpg","videoLink":"https://yandex.ru/video/preview/10247508116464890799","gifLink":"https://i.pinimg.com/originals/7c/be/7d/7cbe7d76599d09cf3c1a291b439d6023.gif"}
+  ],
+  "press": [
+    {"id":29,"title":"Русские скручивания с отягощением","img":"https://i.ytimg.com/vi/06fQwLuQXck/hqdefault.jpg","videoLink":"https://yandex.ru/video/preview/18292780603274722387","gifLink":"https://gymbot.ru/images/68a3273c9662f_elbow-to-knee-sit-up-movement.gif"},
+    {"id":30,"title":"Поднятие ног на турнике","img":"https://i.ytimg.com/vi/4D_GvAOYHTc/hqdefault.jpg","videoLink":"https://yandex.ru/video/preview/3879315104608629718","gifLink":"https://fitnessandbeast.com/wp-content/uploads/2016/02/Hanging-knee-raises.gif"},
+    {"id":31,"title":"Скручивание с гантелью","img":"https://avatars.mds.yandex.net/i?id=658e72132073aa63ad3a797abd305764dbf2609f-15420526-images-thumbs&n=13","videoLink":"https://yandex.ru/video/preview/18406139234745082886","gifLink":"https://modusx.de/wp-content/uploads/crunches-mit-gewicht.gif"},
+    {"id":32,"title":"Классические скручивания","img":"https://i.ytimg.com/vi/bxbOUKZfGx4/maxresdefault.jpg","videoLink":"https://yandex.ru/video/preview/5768907415293753816","gifLink":"https://i.pinimg.com/originals/fc/4b/07/fc4b07092d4233d268d43c40dec321d0.gif?nii=t"}
+  ]
+};
+
+// ============================================
+// РАБОТА С ДАННЫМИ
+// ============================================
+const STORAGE_KEY = 'treny_data';
+const LOG_KEY = 'treny_log';
+
+function loadData() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+  saveData(defaultData);
+  return JSON.parse(JSON.stringify(defaultData));
+}
+function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function loadLog() {
+  const stored = localStorage.getItem(LOG_KEY);
+  if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+  return [];
+}
+function saveLog(log) { localStorage.setItem(LOG_KEY, JSON.stringify(log)); }
+
+function addLogEntry(exercise, weight, reps) {
+  const log = loadLog();
+  log.push({ date: new Date().toLocaleString(), exercise, weight, reps });
+  saveLog(log);
+  renderLog();
+}
+
+function clearLog() {
+  if (confirm('Удалить все записи?')) { saveLog([]); renderLog(); }
+}
+
+function renderLog() {
+  const container = document.getElementById('logList');
+  const log = loadLog();
+  if (log.length === 0) {
+    container.innerHTML = `<div class="log-empty"><span class="log-empty-icon">📭</span>Записей пока нет</div>`;
+    return;
+  }
+  container.innerHTML = log.slice().reverse().map(e =>
+    `<div class="log-item">
+      <div class="log-info"><div class="log-exercise">${e.exercise}</div><div class="log-detail">${e.weight} кг × ${e.reps} повторений</div></div>
+      <div class="log-date">${e.date}</div>
+    </div>`
+  ).join('');
+}
+
+function renderSection(sectionId, data) {
+  const grid = document.getElementById(`grid-${sectionId}`);
+  if (!grid) return;
+  const exercises = data[sectionId] || [];
+  if (exercises.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px 0;">Нет упражнений. Добавьте первое!</div>`;
+    return;
+  }
+  grid.innerHTML = exercises.map(ex => `
+    <div class="exercise-card" data-section="${sectionId}" data-id="${ex.id}">
+      <img class="card-img" src="${ex.img || 'https://via.placeholder.com/400x200/14141e/666680?text=Нет+изображения'}" alt="${ex.title || 'Упражнение'}" loading="lazy">
+      <div class="card-body">
+        <h3>${ex.title || 'Без названия'}</h3>
+        <div class="card-tags"><span>${sectionId === 'biceps' ? '💪' : sectionId === 'triceps' ? '🔱' : sectionId === 'predplechia' ? '🤲' : sectionId === 'grud' ? '🔥' : sectionId === 'nogi' ? '🦵' : sectionId === 'spina' ? '🔙' : sectionId === 'plechi' ? '🏋️' : '⬆️'}</span></div>
+        <div class="card-actions">
+          ${ex.videoLink ? `<button class="btn-video" onclick="window.open('${ex.videoLink}','_blank')">▶️ Видео</button>` : ''}
+          <button class="btn-edit" onclick="editExercise(this)">✏️</button>
+          <button class="btn-delete" onclick="deleteExercise(this)">🗑️</button>
+          <button class="btn-log" onclick="openLogModal(this)">➕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAll(data) {
+  ['biceps','triceps','predplechia','grud','nogi','spina','plechi','press'].forEach(id => renderSection(id, data));
+}
+
+function getExercise(data, sectionId, exerciseId) {
+  const arr = data[sectionId] || [];
+  return arr.find(ex => ex.id === exerciseId);
+}
+
+function updateExercise(data, sectionId, exerciseId, fields) {
+  const arr = data[sectionId] || [];
+  const idx = arr.findIndex(ex => ex.id === exerciseId);
+  if (idx !== -1) { arr[idx] = { ...arr[idx], ...fields }; saveData(data); renderSection(sectionId, data); }
+}
+
+function deleteExercise(btn) {
+  const card = btn.closest('.exercise-card');
+  if (!card || !confirm('Удалить это упражнение?')) return;
+  const sectionId = card.dataset.section, exerciseId = parseInt(card.dataset.id);
+  const data = loadData();
+  data[sectionId] = (data[sectionId] || []).filter(ex => ex.id !== exerciseId);
+  saveData(data);
+  renderSection(sectionId, data);
+}
+
+function addExercise(data, sectionId) {
+  const arr = data[sectionId] || [];
+  const newId = (arr.reduce((max, ex) => Math.max(max, ex.id), 0) + 1);
+  arr.push({ id: newId, title: 'Новое упражнение', img: 'https://via.placeholder.com/400x200/14141e/666680?text=Новое+упражнение', videoLink: '', gifLink: '' });
+  saveData(data);
+  renderSection(sectionId, data);
+}
+
+function editExercise(btn) {
+  const card = btn.closest('.exercise-card');
+  if (!card || card.querySelector('.edit-mode')) return;
+  const sectionId = card.dataset.section, exerciseId = parseInt(card.dataset.id);
+  const data = loadData();
+  const ex = getExercise(data, sectionId, exerciseId);
+  if (!ex) return;
+  const body = card.querySelector('.card-body');
+  body.innerHTML = `
+    <div class="edit-mode">
+      <input type="text" class="edit-title" value="${(ex.title||'').replace(/"/g,'&quot;')}" placeholder="Название">
+      <input type="text" class="edit-img" value="${(ex.img||'').replace(/"/g,'&quot;')}" placeholder="URL картинки">
+      <input type="text" class="edit-video" value="${(ex.videoLink||'').replace(/"/g,'&quot;')}" placeholder="Ссылка на видео">
+      <input type="text" class="edit-gif" value="${(ex.gifLink||'').replace(/"/g,'&quot;')}" placeholder="Ссылка на GIF">
+      <div class="edit-actions">
+        <button class="btn-save" onclick="saveEdit(this)">💾 Сохранить</button>
+        <button class="btn-cancel" onclick="renderSection('${sectionId}', loadData())">Отмена</button>
+      </div>
+    </div>
+  `;
+  body.querySelector('.edit-title').focus();
+}
+
+function saveEdit(btn) {
+  const card = btn.closest('.exercise-card');
+  if (!card) return;
+  const sectionId = card.dataset.section, exerciseId = parseInt(card.dataset.id);
+  const body = card.querySelector('.card-body');
+  const title = body.querySelector('.edit-title')?.value?.trim() || 'Без названия';
+  const img = body.querySelector('.edit-img')?.value?.trim() || 'https://via.placeholder.com/400x200/14141e/666680?text=Нет+изображения';
+  const video = body.querySelector('.edit-video')?.value?.trim() || '';
+  const gif = body.querySelector('.edit-gif')?.value?.trim() || '';
+  const data = loadData();
+  updateExercise(data, sectionId, exerciseId, { title, img, videoLink: video, gifLink: gif });
+}
+
+// ============================================
+// НАВИГАЦИЯ
+// ============================================
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.getElementById(pageId)?.classList.add('active');
+  document.querySelectorAll('[data-page]').forEach(el => el.classList.toggle('active', el.dataset.page === pageId));
+  if (window.location.hash !== '#' + pageId) history.pushState(null, '', '#' + pageId);
+  if (pageId === 'diary') renderLog();
+  const data = loadData();
+  if (!['calculator','diary'].includes(pageId)) renderSection(pageId, data);
+  closeMenu();
+  document.querySelector('.bottom-nav')?.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+}
+
+// ============================================
+// МЕНЮ
+// ============================================
+const menuToggle = document.getElementById('menuToggle');
+const navPanel = document.getElementById('navPanel');
+const navOverlay = document.getElementById('navOverlay');
+const navClose = document.getElementById('navClose');
+
+function toggleMenu() { navPanel.classList.toggle('open'); navOverlay.classList.toggle('open'); }
+function closeMenu() { navPanel.classList.remove('open'); navOverlay.classList.remove('open'); }
+
+menuToggle.addEventListener('click', toggleMenu);
+navClose.addEventListener('click', closeMenu);
+navOverlay.addEventListener('click', closeMenu);
+
+document.querySelectorAll('.nav-panel a[data-page]').forEach(a => {
+  a.addEventListener('click', e => { e.preventDefault(); showPage(a.dataset.page); });
+});
+
+document.querySelectorAll('.bottom-nav button[data-page]').forEach(b => {
+  b.addEventListener('click', () => showPage(b.dataset.page));
+});
+
+document.getElementById('homeLink').addEventListener('click', e => { e.preventDefault(); showPage('biceps'); });
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.slice(1) || 'biceps';
+  if (document.getElementById(hash)) showPage(hash);
+});
+
+// ============================================
+// МОДАЛЬНЫЕ ОКНА
+// ============================================
+function openModal(id) {
+  document.getElementById(id)?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id)?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// GIF модалка
+const gifModal = document.getElementById('gifModal');
+document.getElementById('gifModalClose').addEventListener('click', () => closeModal('gifModal'));
+gifModal.addEventListener('click', e => { if (e.target === gifModal) closeModal('gifModal'); });
+
+function openGifModal(title, gifLink) {
+  document.getElementById('gifModalTitle').textContent = title || 'Упражнение';
+  const body = document.getElementById('gifModalBody');
+  if (!gifLink || gifLink.trim() === '') {
+    body.innerHTML = `<div class="no-gif">🎞️ GIF отсутствует</div>`;
+  } else {
+    body.innerHTML = `<img src="${gifLink}" alt="${title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-gif\\'>⚠️ Не удалось загрузить GIF</div>'">`;
+  }
+  openModal('gifModal');
+}
+
+// Лог модалка
+const logModal = document.getElementById('logModal');
+document.getElementById('logModalClose').addEventListener('click', () => closeModal('logModal'));
+document.getElementById('logCancelBtn').addEventListener('click', () => closeModal('logModal'));
+logModal.addEventListener('click', e => { if (e.target === logModal) closeModal('logModal'); });
+
+let currentLogExercise = '';
+function openLogModal(btn) {
+  const card = btn.closest('.exercise-card');
+  if (!card) return;
+  const sectionId = card.dataset.section, exerciseId = parseInt(card.dataset.id);
+  const ex = getExercise(loadData(), sectionId, exerciseId);
+  if (!ex) return;
+  currentLogExercise = ex.title || 'Упражнение';
+  document.getElementById('logModalTitle').textContent = `Записать: ${currentLogExercise}`;
+  document.getElementById('logWeight').value = '';
+  document.getElementById('logReps').value = '';
+  openModal('logModal');
+}
+
+document.getElementById('logSaveBtn').addEventListener('click', () => {
+  const weight = parseFloat(document.getElementById('logWeight').value);
+  const reps = parseInt(document.getElementById('logReps').value);
+  if (isNaN(weight) || weight < 0) { alert('Введите корректный вес.'); return; }
+  if (isNaN(reps) || reps < 1) { alert('Введите корректное количество повторений.'); return; }
+  addLogEntry(currentLogExercise, weight, reps);
+  closeModal('logModal');
+  showToast('✅ Запись сохранена!');
+});
+
+// Данные модалка
+const dataModal = document.getElementById('dataModal');
+document.getElementById('dataModalClose').addEventListener('click', () => closeModal('dataModal'));
+document.getElementById('dataModalCloseBtn').addEventListener('click', () => closeModal('dataModal'));
+dataModal.addEventListener('click', e => { if (e.target === dataModal) closeModal('dataModal'); });
+
+document.getElementById('exportDataBtn').addEventListener('click', () => {
+  document.getElementById('dataModalTitle').textContent = '📤 Экспорт данных';
+  document.getElementById('dataTextarea').value = JSON.stringify(loadData(), null, 2);
+  document.getElementById('dataTextarea').readOnly = true;
+  document.getElementById('copyDataBtn').style.display = 'inline-block';
+  document.getElementById('importDataConfirmBtn').style.display = 'none';
+  openModal('dataModal');
+});
+
+document.getElementById('importDataBtn').addEventListener('click', () => {
+  document.getElementById('dataModalTitle').textContent = '📥 Импорт данных';
+  document.getElementById('dataTextarea').value = '';
+  document.getElementById('dataTextarea').readOnly = false;
+  document.getElementById('dataTextarea').placeholder = 'Вставьте JSON с данными...';
+  document.getElementById('copyDataBtn').style.display = 'none';
+  document.getElementById('importDataConfirmBtn').style.display = 'inline-block';
+  openModal('dataModal');
+});
+
+document.getElementById('copyDataBtn').addEventListener('click', () => {
+  const ta = document.getElementById('dataTextarea');
+  ta.select();
+  try { document.execCommand('copy'); showToast('✅ Скопировано!'); } catch(e) { alert('Скопируйте вручную.'); }
+});
+
+document.getElementById('importDataConfirmBtn').addEventListener('click', () => {
+  try {
+    const data = JSON.parse(document.getElementById('dataTextarea').value);
+    if (!data.biceps) throw new Error('Неверная структура');
+    saveData(data);
+    closeModal('dataModal');
+    renderAll(data);
+    const active = document.querySelector('.page.active');
+    if (active && !['calculator','diary'].includes(active.id)) renderSection(active.id, data);
+    showToast('✅ Данные импортированы!');
+  } catch(e) { alert('❌ Неверный формат JSON.'); }
+});
+
+// ============================================
+// ТАЙМЕР С ФОНОВОЙ РАБОТОЙ
+// ============================================
+let timerSeconds = 90, timerCurrent = 90, timerInterval = null, timerRunning = false;
+const timerDisplay = document.getElementById('timerDisplay');
+const timerSetValue = document.getElementById('timerSetValue');
+const timerStart = document.getElementById('timerStart');
+const timerStop = document.getElementById('timerStop');
+const timerReset = document.getElementById('timerReset');
+const timerInc = document.getElementById('timerInc');
+const timerDec = document.getElementById('timerDec');
+const timerPanel = document.getElementById('timerPanel');
+const timerToggle = document.getElementById('timerToggle');
+
+function updateTimerDisplay(seconds) {
+  const m = Math.floor(seconds/60), s = seconds%60;
+  timerDisplay.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  timerSetValue.textContent = `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function setTimer(seconds) {
+  if (timerRunning) return;
+  timerSeconds = Math.min(300, Math.max(30, seconds));
+  timerCurrent = timerSeconds;
+  updateTimerDisplay(timerCurrent);
+}
+
+timerInc.addEventListener('click', () => { if (!timerRunning) setTimer(timerSeconds + 15); });
+timerDec.addEventListener('click', () => { if (!timerRunning) setTimer(timerSeconds - 15); });
+
+timerStart.addEventListener('click', () => {
+  if (timerRunning) return;
+  timerRunning = true;
+  timerStart.style.display = 'none';
+  timerStop.style.display = 'inline-block';
+  // Используем requestAnimationFrame для плавности и фоновой работы
+  let lastTime = Date.now();
+  timerInterval = setInterval(() => {
+    const now = Date.now();
+    const diff = Math.floor((now - lastTime) / 1000);
+    if (diff >= 1) {
+      timerCurrent -= diff;
+      lastTime = now;
+      if (timerCurrent <= 0) {
+        timerCurrent = 0;
+        updateTimerDisplay(0);
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerStart.style.display = 'inline-block';
+        timerStop.style.display = 'none';
+        // Звук
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 800;
+          gain.gain.value = 0.5;
+          osc.start(); setTimeout(() => osc.stop(), 500);
+        } catch(e) {}
+        // Уведомление
+        if (document.hidden) {
+          try { navigator.serviceWorker.ready.then(reg => reg.showNotification('⏰ Таймер закончился!', { body: 'Время отдыха вышло!', icon: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E💪%3C/text%3E%3C/svg%3E' })); } catch(e) {}
+        }
+        // Восстанавливаем
+        timerCurrent = timerSeconds;
+        updateTimerDisplay(timerCurrent);
+        return;
+      }
+      updateTimerDisplay(timerCurrent);
+    }
+  }, 500);
+});
+
+timerStop.addEventListener('click', () => {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerStart.style.display = 'inline-block';
+  timerStop.style.display = 'none';
+});
+
+timerReset.addEventListener('click', () => {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerStart.style.display = 'inline-block';
+  timerStop.style.display = 'none';
+  timerCurrent = timerSeconds;
+  updateTimerDisplay(timerCurrent);
+});
+
+// Скрытие/показ таймера
+let timerHidden = false;
+timerToggle.addEventListener('click', () => {
+  timerHidden = !timerHidden;
+  timerPanel.classList.toggle('hidden', timerHidden);
+  timerToggle.classList.toggle('hidden', !timerHidden);
+  timerToggle.textContent = timerHidden ? '⏱️' : '✕';
+});
+
+// Показываем кнопку таймера после загрузки
+setTimeout(() => {
+  timerToggle.classList.remove('hidden');
+}, 1000);
+
+// Сохраняем состояние таймера при выходе
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && timerRunning) {
+    // Продолжаем работать в фоне через setTimeout
+  }
+});
+
+// ============================================
+// КАЛЬКУЛЯТОР
+// ============================================
+document.getElementById('calorieForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const gender = document.getElementById('gender').value;
+  const age = parseFloat(document.getElementById('age').value);
+  const weight = parseFloat(document.getElementById('weight').value);
+  const height = parseFloat(document.getElementById('height').value);
+  const activity = parseFloat(document.getElementById('activity').value);
+  if (!age || !weight || !height) { alert('Заполните все поля.'); return; }
+  let bmr = (gender === 'male') ? 10*weight + 6.25*height - 5*age + 5 : 10*weight + 6.25*height - 5*age - 161;
+  bmr = Math.round(bmr);
+  const maintenance = Math.round(bmr * activity);
+  document.getElementById('bmrDisplay').textContent = bmr;
+  document.getElementById('maintenanceDisplay').textContent = maintenance;
+  document.getElementById('lossDisplay').textContent = Math.round(maintenance * 0.85);
+  document.getElementById('gainDisplay').textContent = Math.round(maintenance * 1.15);
+  document.getElementById('resultBox').classList.add('show');
+});
+
+// ============================================
+// TOAST УВЕДОМЛЕНИЯ
+// ============================================
+function showToast(text) {
+  const toast = document.createElement('div');
+  toast.textContent = text;
+  Object.assign(toast.style, {
+    position: 'fixed', bottom: 'calc(130px + env(safe-area-inset-bottom, 0px))',
+    left: '50%', transform: 'translateX(-50%)',
+    background: 'rgba(10,10,15,0.92)', backdropFilter: 'blur(12px)',
+    color: '#fff', padding: '12px 24px', borderRadius: '30px',
+    fontSize: '0.95rem', fontWeight: '600',
+    zIndex: '9999', boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+    border: '1px solid rgba(255,255,255,0.06)',
+    animation: 'fadeIn 0.3s ease'
+  });
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 2500);
+}
+
+// ============================================
+// JSON БЛОК
+// ============================================
+document.getElementById('jsonTextContent').textContent = JSON.stringify(defaultData, null, 2);
+document.getElementById('copyJsonBtn').addEventListener('click', function() {
+  const text = document.getElementById('jsonTextContent').textContent;
+  navigator.clipboard?.writeText(text)?.then(() => {
+    const orig = this.textContent;
+    this.textContent = '✅ Скопировано!';
+    setTimeout(() => this.textContent = orig, 2000);
+  }) || (() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    showToast('✅ Скопировано!');
+  })();
+});
+
+// ============================================
+// ОБРАБОТЧИКИ КАРТОЧЕК (клик для GIF)
+// ============================================
+document.addEventListener('click', function(e) {
+  const card = e.target.closest('.exercise-card');
+  if (card && !e.target.closest('button') && !e.target.closest('.edit-mode')) {
+    const sectionId = card.dataset.section;
+    const exerciseId = parseInt(card.dataset.id);
+    if (sectionId && !isNaN(exerciseId)) {
+      const ex = getExercise(loadData(), sectionId, exerciseId);
+      if (ex) openGifModal(ex.title, ex.gifLink);
+    }
+  }
+});
+
+// Кнопки добавления
+document.querySelectorAll('.add-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const sectionId = this.dataset.section;
+    if (sectionId) addExercise(loadData(), sectionId);
+  });
+});
+
+// Очистка дневника
+document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+
+// ============================================
+// PWA
+// ============================================
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'treny-v2';
+    self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])).then(() => self.skipWaiting())); });
+    self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
+    self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => { const c = res.clone(); caches.open(CACHE).then(cache => cache.put(e.request, c)); return res; }).catch(() => e.request.mode === 'navigate' ? caches.match('/') : null))); });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+}
+
+// Кнопка установки
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.createElement('button');
+  btn.id = 'installBtn';
+  btn.textContent = '📲 Установить приложение';
+  btn.onclick = async () => {
+    if (deferredPrompt) {
+      const result = await deferredPrompt.prompt();
+      if (result.outcome === 'accepted') { btn.textContent = '✅ Установлено!'; btn.style.background = '#44cc88'; setTimeout(() => btn.remove(), 3000); }
+      deferredPrompt = null;
+    }
+  };
+  document.body.appendChild(btn);
+});
+
+// ============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================
+const data = loadData();
+renderAll(data);
+const start = window.location.hash.slice(1) || 'biceps';
+showPage(document.getElementById(start) ? start : 'biceps');
+setTimer(90);
+renderLog();
+
+console.log('💪 Treny Pro v2.0 загружен!');
+</script>
+</body>
+</html>
